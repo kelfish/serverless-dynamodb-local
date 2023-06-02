@@ -295,7 +295,7 @@ class ServerlessDynamodbLocal {
     getTableDefinitionsFromStack(stack) {
         const resources = _.get(stack, "Resources", []);
         return Object.keys(resources).map((key) => {
-            if (resources[key].Type === "AWS::DynamoDB::Table") {
+            if ([resources[key].Type === "AWS::DynamoDB::Table" || resources[key].Type === "AWS::DynamoDB::GlobalTable") {
                 return resources[key].Properties;
             }
         }).filter((n) => n);
@@ -370,7 +370,10 @@ class ServerlessDynamodbLocal {
                         gsi.ProvisionedThroughput = defaultProvisioning;
                     });
                 }
-              }
+            }
+            if (migration.Replicas) {
+                delete migration.Replicas;
+            }
             dynamodb.raw.createTable(migration, (err) => {
                 if (err) {
                     if (err.name === 'ResourceInUseException') {
